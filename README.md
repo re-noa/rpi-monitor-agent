@@ -12,24 +12,28 @@
     * Persistance d'état (délai d'alerte) pour filtrer les pics de charge éphémères.
 * **Communication Sécurisée :** Intégration de l'API REST Discord (v10) via `libcurl`.
 * **Architecture Industrielle :** Gestion des secrets par template, configuration JSON et déploiement en tant que service `systemd`.
+* **Monitoring d'Infrastructures Web :** Vérification périodique de la disponibilité de sites web via requêtes HTTP (`libcurl`).
+* **Surveillance Espace Disque :** Analyse via `statvfs` pour prévenir la saturation du système de fichiers.
+* **Architecture Découplée & Persistance :** Stockage continu des métriques dans une base **SQLite3** locale.
+* **Dashboard Web Temps Réel :** Interface graphique asynchrone pour visualiser les constantes et l'état des services.
 
 ---
 
 ## Tech Stack
-* **Langage :** C++17 (POO, STL, Streams)
-* **Build System :** CMake 3.10+
-* **Bibliothèques :** 
-    * `libcurl` : Transferts de données réseau.
-    * `nlohmann/json` : Parsing et manipulation de données JSON.
-* **Système :** Linux (Raspbian/Debian), Systemd.
+* **Agent Core :** C++17, CMake 3.10+, `libcurl`, `nlohmann/json`, `libsqlite3`
+* **Base de données :** SQLite3
+* **Backend Web :** Python 3, FastAPI, Uvicorn (Architecture REST)
+* **Frontend :** HTML/JS, Tailwind CSS, Chart.js (Polling dynamique)
+* **Déploiement :** Linux (Raspbian/Debian), Systemd, Nginx/Apache (Reverse Proxy)
 
 ---
 
 ## Architecture du Projet
-L'architecture suit le principe de **Séparation des Préoccupations (SoC)** :
-* `Collector` : Acquisition des métriques matérielles.
-* `Notifier` : Logique d'expédition des alertes (abstraction de l'API Discord).
-* `Core` : Gestionnaire de configuration et cycle de vie.
+L'architecture suit une logique de micro-services découplés autour d'une base de données commune :
+* **Producer (C++) :** Daemon de bas niveau récoltant les métriques (Sysfs, Procfs, HTTP) et les persistant via SQLite.
+* **Consumer API (Python) :** Serveur FastAPI asynchrone exposant les données au format JSON.
+* **Dashboard (UI) :** Single Page Application interrogeant l'API pour un affichage dynamique (Graphiques lissés, LEDs d'état).
+* **Notifier :** Module C++ gérant les alertes critiques via Webhooks Discord.
 
 ---
 
