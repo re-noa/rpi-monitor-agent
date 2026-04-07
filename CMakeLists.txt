@@ -13,10 +13,13 @@ include_directories(include)
 
 find_package(CURL REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SQLITE3 REQUIRED sqlite3)
 
 add_executable(monitor_agent 
     src/main.cpp 
     src/core/ConfigManager.cpp
+    src/core/DatabaseManager.cpp
     src/collector/CpuCollector.cpp
     src/collector/DiskCollector.cpp
     src/collector/MemoryCollector.cpp
@@ -28,6 +31,7 @@ target_link_libraries(monitor_agent
     PRIVATE 
     CURL::libcurl 
     nlohmann_json::nlohmann_json
+    ${SQLITE3_LIBRARIES}
 )
 
 target_compile_options(monitor_agent PRIVATE 

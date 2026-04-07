@@ -1,4 +1,5 @@
 #include "core/ConfigManager.hpp"
+#include "core/DatabaseManager.hpp"
 #include "collector/CpuCollector.hpp"
 #include "collector/MemoryCollector.hpp"
 #include "collector/DiskCollector.hpp"
@@ -26,6 +27,17 @@ int main() {
         return 1;
     }
 
+    DatabaseManager db("metrics.db");
+    if (!db.open()) {
+        std::cerr << "[Error] Failed to open database: metrics.db" << std::endl;
+        return 1;
+    }
+
+    if (!db.initTable()) {
+        std::cerr << "[Error] Failed to initialize database table." << std::endl;
+        return 1;
+    }
+
     CpuCollector cpu;
     MemoryCollector mem;
     DiskCollector disk;
@@ -43,6 +55,8 @@ int main() {
         double temp = cpu.getTemperature();
         double ram = mem.getMemoryUsage();
         double diskUsage = disk.getDiskUsage();
+
+        db.insertMetrics(temp, ram, diskUsage);
 
         if (temp > config.getTempThreshold() && !tempAlertSent) {
             if (notifier.sendMessage("Alert: CPU temp at " + formatDouble(temp, 1) + "°C")) {
