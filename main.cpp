@@ -1,18 +1,25 @@
 #include "collector/CpuCollector.hpp"
+#include "collector/MemoryCollector.hpp"
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <iomanip>
 
 int main() {
     CpuCollector cpu;
+    MemoryCollector mem;
+
+    std::cout << "--- RPi Monitor Agent Started ---" << std::endl;
+    std::cout << std::fixed << std::setprecision(1);
 
     while (true) {
         double temp = cpu.getTemperature();
-        if (temp >= 0) {
-            std::cout << "[Monitor] CPU Temp: " << temp << " °C" << std::endl;
-        } else {
-            std::cerr << "[Error] Failed to read sensor" << std::endl;
-        }
+        double ramUsage = mem.getMemoryUsage();
+        
+        std::cout << "[Monitor] "
+                  << "CPU: " << temp << " °C | "
+                  << "RAM: " << ramUsage << "%" 
+                  << std::endl;
 
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }

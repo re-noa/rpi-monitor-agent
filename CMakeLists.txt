@@ -9,6 +9,7 @@ include_directories(include)
 add_executable(monitor_agent 
     main.cpp 
     src/collector/CpuCollector.cpp
+    src/collector/MemoryCollector.cpp
 )
 
 target_compile_options(monitor_agent PRIVATE -Wall -Wextra)
