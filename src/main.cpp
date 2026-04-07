@@ -1,11 +1,14 @@
 #include "core/ConfigManager.hpp"
 #include "collector/CpuCollector.hpp"
 #include "collector/MemoryCollector.hpp"
+#include "collector/WebCollector.hpp"
 #include "notifier/DiscordBotNotifier.hpp"
 #include <iostream>
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <sstream>
+#include <map>
 
 std::string formatDouble(double value, int precision) {
     std::ostringstream out;
@@ -24,11 +27,14 @@ int main() {
 
     CpuCollector cpu;
     MemoryCollector mem;
+    WebCollector web;
     DiscordBotNotifier notifier(config.getToken(), config.getUserId());
 
     bool tempAlertSent = false;
     bool ramAlertSent = false;
     int ramOverThresholdDuration = 0;
+    
+    std::map<std::string, bool> siteAlerts;
 
     while (true) {
         double temp = cpu.getTemperature();
@@ -53,6 +59,22 @@ int main() {
             ramOverThresholdDuration = 0;
             if (ram < config.getRamThreshold() - 5.0) {
                 ramAlertSent = false;
+            }
+        }
+
+        for (const auto& url : config.getTargetSites()) {
+            bool isUp = web.isSiteUp(url);
+            
+            if (!isUp && !siteAlerts[url]) {
+                if (notifier.sendMessage("Website Down: " + url)) {
+                    siteAlerts[url] = true;
+                }
+            } 
+
+            else if (isUp && siteAlerts[url]) {
+                if (notifier.sendMessage("Website Back Online: " + url)) {
+                    siteAlerts[url] = false;
+                }
             }
         }
 

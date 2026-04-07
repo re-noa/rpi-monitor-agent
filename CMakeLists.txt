@@ -19,6 +19,7 @@ add_executable(monitor_agent
     src/core/ConfigManager.cpp
     src/collector/CpuCollector.cpp
     src/collector/MemoryCollector.cpp
+    src/collector/WebCollector.cpp
     src/notifier/DiscordBotNotifier.cpp
 )
 

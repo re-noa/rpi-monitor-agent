@@ -38,3 +38,7 @@ int ConfigManager::getRamAlertDelay() const {
 int ConfigManager::getInterval() const {
     return m_data.value("interval_seconds", 5);
 }
+
+std::vector<std::string> ConfigManager::getTargetSites() const {
+    return m_data.value("sites_to_monitor", std::vector<std::string>{});
+}

@@ -15,6 +15,7 @@ public:
     double getRamThreshold() const;
     int getRamAlertDelay() const;
     int getInterval() const;
+    std::vector<std::string> getTargetSites() const;
 
 private:
     std::string m_filename;

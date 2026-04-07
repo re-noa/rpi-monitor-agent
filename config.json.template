@@ -4,5 +4,9 @@
     "temp_threshold": 60.0,
     "ram_threshold": 95.0,
     "ram_alert_delay": 60,
-    "interval_seconds": 10
+    "interval_seconds": 10,
+    "sites_to_monitor": [
+        "https://google.com",
+        "https://noa-r.fr"
+    ]
 }
