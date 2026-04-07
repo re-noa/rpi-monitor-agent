@@ -1,6 +1,12 @@
 build/
 bin/
 obj/
+*.o
+
+__pycache__/
+*.py[cod]
+venv/
+.env
 
 .vscode/
 .idea/
@@ -10,5 +16,7 @@ obj/
 config.json
 monitor_agent
 atest_*
+*.db
+*.log
 
 .DS_Store
