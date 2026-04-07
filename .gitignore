@@ -1,0 +1,13 @@
+build/
+bin/
+obj/
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+monitor_agent
+atest_*
+
+.DS_Store
