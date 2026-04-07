@@ -92,6 +92,8 @@ int main() {
         for (const auto& url : config.getTargetSites()) {
             bool isUp = web.isSiteUp(url);
             
+            db.updateSiteStatus(url, isUp);
+
             if (!isUp && !siteAlerts[url]) {
                 if (notifier.sendMessage("Website Down: " + url)) {
                     siteAlerts[url] = true;

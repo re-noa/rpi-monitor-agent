@@ -13,6 +13,7 @@ public:
     void close();
     bool initTable();
     bool insertMetrics(double cpu, double ram, double disk);
+    bool updateSiteStatus(const std::string& url, bool isUp);
 
 private:
     std::string m_dbPath;
