@@ -1,19 +1,38 @@
 cmake_minimum_required(VERSION 3.10)
-project(RPiMonitorAgent)
+
+project(RPiMonitorAgent 
+        VERSION 1.0.0 
+        DESCRIPTION "Agent de monitoring low-level pour Raspberry Pi"
+        LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 include_directories(include)
 
-find_package(nlohmann_json 3.2.0 REQUIRED)
+find_package(CURL REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 add_executable(monitor_agent 
     src/main.cpp 
     src/core/ConfigManager.cpp
     src/collector/CpuCollector.cpp
     src/collector/MemoryCollector.cpp
+    src/notifier/DiscordBotNotifier.cpp
 )
 
-target_link_libraries(monitor_agent PRIVATE nlohmann_json::nlohmann_json)
-target_compile_options(monitor_agent PRIVATE -Wall -Wextra)
+target_link_libraries(monitor_agent 
+    PRIVATE 
+    CURL::libcurl 
+    nlohmann_json::nlohmann_json
+)
+
+target_compile_options(monitor_agent PRIVATE 
+    -Wall 
+    -Wextra 
+    -Wpedantic 
+    -Wshadow 
+    -Wnon-virtual-dtor 
+    -O3
+)

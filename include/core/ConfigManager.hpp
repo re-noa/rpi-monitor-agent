@@ -9,7 +9,11 @@ public:
     ConfigManager(const std::string& filename);
     bool load();
 
+    std::string getToken() const;
+    std::string getUserId() const;
     double getTempThreshold() const;
+    double getRamThreshold() const;
+    int getRamAlertDelay() const;
     int getInterval() const;
 
 private:

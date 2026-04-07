@@ -1,33 +1,46 @@
 #include "core/ConfigManager.hpp"
 #include "collector/CpuCollector.hpp"
 #include "collector/MemoryCollector.hpp"
-#include <iostream>
+#include "notifier/DiscordBotNotifier.hpp"
 #include <thread>
 #include <chrono>
-#include <iomanip>
 
 int main() {
     ConfigManager config("config.json");
-    if (!config.load()) {
-        std::cerr << "[Error] Failed to load config.json" << std::endl;
-        return 1;
-    }
+    if (!config.load()) return 1;
 
     CpuCollector cpu;
     MemoryCollector mem;
+    DiscordBotNotifier notifier(config.getToken(), config.getUserId());
 
-    std::cout << "--- RPi Monitor Agent (Core Loaded) ---" << std::endl;
-    std::cout << "Threshold: " << config.getTempThreshold() << " °C" << std::endl;
-    std::cout << std::fixed << std::setprecision(1);
+    bool tempAlertSent = false;
+    bool ramAlertSent = false;
+    int ramOverThresholdDuration = 0;
 
     while (true) {
         double temp = cpu.getTemperature();
         double ram = mem.getMemoryUsage();
 
-        std::cout << "[Monitor] CPU: " << temp << " °C | RAM: " << ram << " %" << std::endl;
+        if (temp > config.getTempThreshold() && !tempAlertSent) {
+            if (notifier.sendMessage("Alert: CPU temp at " + std::to_string(temp) + "C")) {
+                tempAlertSent = true;
+            }
+        } else if (temp < config.getTempThreshold() - 5.0) {
+            tempAlertSent = false;
+        }
 
-        if (temp > config.getTempThreshold()) {
-            std::cout << "  >> ALERT: High temperature detected!" << std::endl;
+        if (ram > config.getRamThreshold()) {
+            ramOverThresholdDuration += config.getInterval();
+            if (ramOverThresholdDuration >= config.getRamAlertDelay() && !ramAlertSent) {
+                if (notifier.sendMessage("Alert: RAM usage above " + std::to_string(ram) + "% for " + std::to_string(ramOverThresholdDuration) + "s")) {
+                    ramAlertSent = true;
+                }
+            }
+        } else {
+            ramOverThresholdDuration = 0;
+            if (ram < config.getRamThreshold() - 5.0) {
+                ramAlertSent = false;
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(config.getInterval()));
