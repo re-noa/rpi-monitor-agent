@@ -2,12 +2,25 @@
 #include "collector/CpuCollector.hpp"
 #include "collector/MemoryCollector.hpp"
 #include "notifier/DiscordBotNotifier.hpp"
+#include <iostream>
+#include <iomanip>
 #include <thread>
 #include <chrono>
 
+std::string formatDouble(double value, int precision) {
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(precision) << value;
+    return out.str();
+}
+
 int main() {
     ConfigManager config("config.json");
-    if (!config.load()) return 1;
+    
+    if (!config.load()) {
+        std::cerr << "[Error] config.json missing!" << std::endl;
+        std::cerr << "[Hint] Copy config.json.template to config.json and fill your secrets." << std::endl;
+        return 1;
+    }
 
     CpuCollector cpu;
     MemoryCollector mem;
@@ -22,7 +35,7 @@ int main() {
         double ram = mem.getMemoryUsage();
 
         if (temp > config.getTempThreshold() && !tempAlertSent) {
-            if (notifier.sendMessage("Alert: CPU temp at " + std::to_string(temp) + "C")) {
+            if (notifier.sendMessage("Alert: CPU temp at " + formatDouble(temp, 1) + "°C")) {
                 tempAlertSent = true;
             }
         } else if (temp < config.getTempThreshold() - 5.0) {
@@ -32,7 +45,7 @@ int main() {
         if (ram > config.getRamThreshold()) {
             ramOverThresholdDuration += config.getInterval();
             if (ramOverThresholdDuration >= config.getRamAlertDelay() && !ramAlertSent) {
-                if (notifier.sendMessage("Alert: RAM usage above " + std::to_string(ram) + "% for " + std::to_string(ramOverThresholdDuration) + "s")) {
+                if (notifier.sendMessage("Alert: RAM usage above " + formatDouble(ram, 1) + "% for " + std::to_string(ramOverThresholdDuration) + "s")) {
                     ramAlertSent = true;
                 }
             }

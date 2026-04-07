@@ -1,0 +1,8 @@
+{
+    "discord_token": "YOUR_BOT_TOKEN_HERE",
+    "discord_user_id": "YOUR_USER_ID_HERE",
+    "temp_threshold": 60.0,
+    "ram_threshold": 95.0,
+    "ram_alert_delay": 60,
+    "interval_seconds": 10
+}
