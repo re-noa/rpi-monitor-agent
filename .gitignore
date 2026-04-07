@@ -7,6 +7,7 @@ obj/
 *.swp
 *.swo
 
+config.json
 monitor_agent
 atest_*
 

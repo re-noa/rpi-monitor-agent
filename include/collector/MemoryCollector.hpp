@@ -9,7 +9,6 @@ public:
     double getMemoryUsage();
 
 private:
-    const std::string m_memInfoPath = "/proc/meminfo";
     long extractValue(const std::string& line);
 };
 

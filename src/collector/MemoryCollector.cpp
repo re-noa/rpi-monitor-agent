@@ -16,12 +16,11 @@ long MemoryCollector::extractValue(const std::string& line) {
 }
 
 double MemoryCollector::getMemoryUsage() {
-    std::ifstream file(m_memInfoPath);
+    std::ifstream file("/proc/meminfo");
     if (!file.is_open()) return -1.0;
 
     std::string line;
-    long total = 0;
-    long available = 0;
+    long total = 0, available = 0;
 
     while (std::getline(file, line)) {
         if (line.find("MemTotal:") == 0) {
@@ -33,7 +32,5 @@ double MemoryCollector::getMemoryUsage() {
         if (total > 0 && available > 0) break;
     }
 
-    if (total == 0) return -1.0;
-
-    return (1.0 - (static_cast<double>(available) / static_cast<double>(total))) * 100.0;
+    return (total == 0) ? -1.0 : (1.0 - (double)available / total) * 100.0;
 }
