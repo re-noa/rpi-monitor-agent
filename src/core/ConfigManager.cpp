@@ -34,9 +34,12 @@ int ConfigManager::getRamAlertDelay() const {
     return m_data.value("ram_alert_delay", 60);
 }
 
-
 int ConfigManager::getInterval() const {
     return m_data.value("interval_seconds", 5);
+}
+
+double ConfigManager::getDiskThreshold() const {
+    return m_data.value("disk_threshold", 90.0);
 }
 
 std::vector<std::string> ConfigManager::getTargetSites() const {

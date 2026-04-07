@@ -1,6 +1,7 @@
 #include "core/ConfigManager.hpp"
 #include "collector/CpuCollector.hpp"
 #include "collector/MemoryCollector.hpp"
+#include "collector/DiskCollector.hpp"
 #include "collector/WebCollector.hpp"
 #include "notifier/DiscordBotNotifier.hpp"
 #include <iostream>
@@ -27,11 +28,13 @@ int main() {
 
     CpuCollector cpu;
     MemoryCollector mem;
+    DiskCollector disk;
     WebCollector web;
     DiscordBotNotifier notifier(config.getToken(), config.getUserId());
 
     bool tempAlertSent = false;
     bool ramAlertSent = false;
+    bool diskAlertSent = false;
     int ramOverThresholdDuration = 0;
     
     std::map<std::string, bool> siteAlerts;
@@ -39,6 +42,7 @@ int main() {
     while (true) {
         double temp = cpu.getTemperature();
         double ram = mem.getMemoryUsage();
+        double diskUsage = disk.getDiskUsage();
 
         if (temp > config.getTempThreshold() && !tempAlertSent) {
             if (notifier.sendMessage("Alert: CPU temp at " + formatDouble(temp, 1) + "°C")) {
@@ -60,6 +64,15 @@ int main() {
             if (ram < config.getRamThreshold() - 5.0) {
                 ramAlertSent = false;
             }
+        }
+
+        if (diskUsage > config.getDiskThreshold() && !diskAlertSent) {
+            std::string msg = "Alert: Disk usage is high: " + formatDouble(diskUsage, 1) + "%";
+            if (notifier.sendMessage(msg)) {
+                diskAlertSent = true;
+            }
+        } else if (diskUsage < config.getDiskThreshold() - 5.0) {
+            diskAlertSent = false;
         }
 
         for (const auto& url : config.getTargetSites()) {
