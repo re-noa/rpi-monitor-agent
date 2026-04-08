@@ -49,7 +49,8 @@ int main() {
     bool diskAlertSent = false;
     int ramOverThresholdDuration = 0;
     
-    std::map<std::string, bool> siteAlerts;
+    std::map<std::string, int> siteFailCounts;
+    const int MAX_FAILURES = 3;
 
     while (true) {
         double temp = cpu.getTemperature();
@@ -94,16 +95,19 @@ int main() {
             
             db.updateSiteStatus(url, isUp);
 
-            if (!isUp && !siteAlerts[url]) {
-                if (notifier.sendMessage("Website Down: " + url)) {
-                    siteAlerts[url] = true;
+            if (!isUp) {
+                siteFailCounts[url]++;
+                
+                if (siteFailCounts[url] == MAX_FAILURES) {
+                    notifier.sendMessage("Website Down: " + url + " (Confirmed)");
                 }
             } 
-
-            else if (isUp && siteAlerts[url]) {
-                if (notifier.sendMessage("Website Back Online: " + url)) {
-                    siteAlerts[url] = false;
+            else {
+                if (siteFailCounts[url] >= MAX_FAILURES) {
+                    notifier.sendMessage("Website Back Online: " + url);
                 }
+                
+                siteFailCounts[url] = 0;
             }
         }
 
