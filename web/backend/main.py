@@ -41,7 +41,10 @@ async def get_status():
 @app.get("/api/config")
 async def get_config():
     with open(os.path.join(os.path.dirname(__file__), "../../config.json"), "r") as f:
-        return json.load(f)
+        config = json.load(f)
+    # Only expose non-secret settings: the endpoint is public via /monitor/api
+    public_keys = ("temp_threshold", "ram_threshold", "disk_threshold", "interval_seconds")
+    return {key: config[key] for key in public_keys if key in config}
 
 @app.get("/api/sites")
 async def get_sites_status():
