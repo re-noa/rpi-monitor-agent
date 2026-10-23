@@ -17,6 +17,13 @@ public:
     int getInterval() const;
     double getDiskThreshold() const;
     std::vector<std::string> getTargetSites() const;
+    int getCertWarningDays() const;
+    std::string getBackupStatusFile() const;
+    double getBackupMaxAgeHours() const;
+    int getMetricsRetentionDays() const;
+    int getSlowCheckInterval() const;
+    std::string getHeartbeatUrl() const;
+    int getHeartbeatInterval() const;
 
 private:
     std::string m_filename;

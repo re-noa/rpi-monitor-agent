@@ -4,13 +4,17 @@
 #include "collector/MemoryCollector.hpp"
 #include "collector/DiskCollector.hpp"
 #include "collector/WebCollector.hpp"
+#include "collector/CertCollector.hpp"
+#include "collector/BackupCollector.hpp"
 #include "notifier/DiscordBotNotifier.hpp"
+#include "notifier/HeartbeatNotifier.hpp"
 #include <iostream>
 #include <iomanip>
 #include <thread>
 #include <chrono>
 #include <sstream>
 #include <map>
+#include <optional>
 
 std::string formatDouble(double value, int precision) {
     std::ostringstream out;
@@ -42,15 +46,29 @@ int main() {
     MemoryCollector mem;
     DiskCollector disk;
     WebCollector web;
+    CertCollector certs;
+    BackupCollector backup;
     DiscordBotNotifier notifier(config.getToken(), config.getUserId());
+    HeartbeatNotifier heartbeat(config.getHeartbeatUrl());
 
     bool tempAlertSent = false;
     bool ramAlertSent = false;
     bool diskAlertSent = false;
+    bool backupAlertSent = false;
     int ramOverThresholdDuration = 0;
-    
+
     std::map<std::string, int> siteFailCounts;
+    std::map<std::string, bool> certAlertSent;
     const int MAX_FAILURES = 3;
+
+    // Slow checks (certificates, backup, DB purge) run at startup, then periodically
+    using Clock = std::chrono::steady_clock;
+    const auto slowInterval = std::chrono::seconds(config.getSlowCheckInterval());
+    const auto heartbeatInterval = std::chrono::seconds(config.getHeartbeatInterval());
+    const auto purgeInterval = std::chrono::hours(24);
+    auto nextSlowCheck = Clock::now();
+    auto nextHeartbeat = Clock::now();
+    auto nextPurge = Clock::now();
 
     while (true) {
         double temp = cpu.getTemperature();
@@ -109,6 +127,51 @@ int main() {
                 
                 siteFailCounts[url] = 0;
             }
+        }
+
+        if (Clock::now() >= nextSlowCheck) {
+            nextSlowCheck = Clock::now() + slowInterval;
+
+            for (const auto& url : config.getTargetSites()) {
+                std::optional<int> expiry = certs.getDaysUntilExpiry(url);
+                if (!expiry) continue;
+                int days = *expiry;
+
+                if (days <= config.getCertWarningDays() && !certAlertSent[url]) {
+                    if (notifier.sendMessage("Alert: TLS certificate for " + url + (days < 0 ? " has EXPIRED" : " expires in " + std::to_string(days) + " days"))) {
+                        certAlertSent[url] = true;
+                    }
+                } else if (days > config.getCertWarningDays()) {
+                    certAlertSent[url] = false;
+                }
+            }
+
+            if (!config.getBackupStatusFile().empty()) {
+                double hours = backup.getHoursSinceLastBackup(config.getBackupStatusFile());
+                bool backupStale = hours < 0 || hours > config.getBackupMaxAgeHours();
+
+                if (backupStale && !backupAlertSent) {
+                    std::string msg = hours < 0
+                        ? "Alert: no successful backup found (" + config.getBackupStatusFile() + ")"
+                        : "Alert: last successful backup was " + formatDouble(hours, 1) + "h ago";
+                    if (notifier.sendMessage(msg)) {
+                        backupAlertSent = true;
+                    }
+                } else if (!backupStale && backupAlertSent) {
+                    notifier.sendMessage("Backup OK again: last success " + formatDouble(hours, 1) + "h ago");
+                    backupAlertSent = false;
+                }
+            }
+        }
+
+        if (Clock::now() >= nextPurge) {
+            nextPurge = Clock::now() + purgeInterval;
+            db.purgeOldMetrics(config.getMetricsRetentionDays());
+        }
+
+        if (heartbeat.isEnabled() && Clock::now() >= nextHeartbeat) {
+            nextHeartbeat = Clock::now() + heartbeatInterval;
+            heartbeat.ping();
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(config.getInterval()));

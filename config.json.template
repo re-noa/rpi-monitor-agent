@@ -9,5 +9,12 @@
     "sites_to_monitor": [
         "https://google.com",
         "https://noa-r.fr"
-    ]
+    ],
+    "cert_warning_days": 14,
+    "backup_status_file": "/var/lib/homelab-backup/last-success",
+    "backup_max_age_hours": 26,
+    "metrics_retention_days": 30,
+    "slow_check_interval_seconds": 3600,
+    "heartbeat_url": "",
+    "heartbeat_interval_seconds": 60
 }

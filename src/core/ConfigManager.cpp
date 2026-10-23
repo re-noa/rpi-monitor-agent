@@ -45,3 +45,31 @@ double ConfigManager::getDiskThreshold() const {
 std::vector<std::string> ConfigManager::getTargetSites() const {
     return m_data.value("sites_to_monitor", std::vector<std::string>{});
 }
+
+int ConfigManager::getCertWarningDays() const {
+    return m_data.value("cert_warning_days", 14);
+}
+
+std::string ConfigManager::getBackupStatusFile() const {
+    return m_data.value("backup_status_file", "");
+}
+
+double ConfigManager::getBackupMaxAgeHours() const {
+    return m_data.value("backup_max_age_hours", 26.0);
+}
+
+int ConfigManager::getMetricsRetentionDays() const {
+    return m_data.value("metrics_retention_days", 30);
+}
+
+int ConfigManager::getSlowCheckInterval() const {
+    return m_data.value("slow_check_interval_seconds", 3600);
+}
+
+std::string ConfigManager::getHeartbeatUrl() const {
+    return m_data.value("heartbeat_url", "");
+}
+
+int ConfigManager::getHeartbeatInterval() const {
+    return m_data.value("heartbeat_interval_seconds", 60);
+}

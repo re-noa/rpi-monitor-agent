@@ -24,7 +24,10 @@ add_executable(monitor_agent
     src/collector/DiskCollector.cpp
     src/collector/MemoryCollector.cpp
     src/collector/WebCollector.cpp
+    src/collector/CertCollector.cpp
+    src/collector/BackupCollector.cpp
     src/notifier/DiscordBotNotifier.cpp
+    src/notifier/HeartbeatNotifier.cpp
 )
 
 target_link_libraries(monitor_agent 

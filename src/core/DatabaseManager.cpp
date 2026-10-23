@@ -32,7 +32,10 @@ bool DatabaseManager::initTable() {
                             "is_up INTEGER,"
                             "last_check DATETIME DEFAULT CURRENT_TIMESTAMP);";
 
+    const char* sql_index = "CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON metrics(timestamp);";
+
     sqlite3_exec(m_db, sql_metrics, nullptr, nullptr, nullptr);
+    sqlite3_exec(m_db, sql_index, nullptr, nullptr, nullptr);
     return sqlite3_exec(m_db, sql_sites, nullptr, nullptr, nullptr) == SQLITE_OK;
 }
 
@@ -47,5 +50,11 @@ bool DatabaseManager::updateSiteStatus(const std::string& url, bool isUp) {
     std::string sql = "INSERT INTO site_status (url, is_up, last_check) VALUES ('" + 
                       url + "', " + (isUp ? "1" : "0") + ", CURRENT_TIMESTAMP) "
                       "ON CONFLICT(url) DO UPDATE SET is_up=excluded.is_up, last_check=CURRENT_TIMESTAMP;";
+    return sqlite3_exec(m_db, sql.c_str(), nullptr, nullptr, nullptr) == SQLITE_OK;
+}
+
+bool DatabaseManager::purgeOldMetrics(int retentionDays) {
+    std::string sql = "DELETE FROM metrics WHERE timestamp < datetime('now', '-" +
+                      std::to_string(retentionDays) + " days');";
     return sqlite3_exec(m_db, sql.c_str(), nullptr, nullptr, nullptr) == SQLITE_OK;
 }

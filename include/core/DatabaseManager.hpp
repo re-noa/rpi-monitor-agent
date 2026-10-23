@@ -14,6 +14,7 @@ public:
     bool initTable();
     bool insertMetrics(double cpu, double ram, double disk);
     bool updateSiteStatus(const std::string& url, bool isUp);
+    bool purgeOldMetrics(int retentionDays);
 
 private:
     std::string m_dbPath;
