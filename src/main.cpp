@@ -42,6 +42,9 @@ int main() {
         return 1;
     }
 
+    // Sites removed from config.json would otherwise stay on the dashboard forever
+    db.pruneSiteStatus(config.getTargetSites());
+
     CpuCollector cpu;
     MemoryCollector mem;
     DiskCollector disk;

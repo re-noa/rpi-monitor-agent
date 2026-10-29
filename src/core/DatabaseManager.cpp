@@ -58,3 +58,38 @@ bool DatabaseManager::purgeOldMetrics(int retentionDays) {
                       std::to_string(retentionDays) + " days');";
     return sqlite3_exec(m_db, sql.c_str(), nullptr, nullptr, nullptr) == SQLITE_OK;
 }
+
+bool DatabaseManager::pruneSiteStatus(const std::vector<std::string>& monitoredSites) {
+    sqlite3_stmt* select = nullptr;
+    if (sqlite3_prepare_v2(m_db, "SELECT url FROM site_status;", -1, &select, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    std::vector<std::string> staleUrls;
+    while (sqlite3_step(select) == SQLITE_ROW) {
+        std::string url = reinterpret_cast<const char*>(sqlite3_column_text(select, 0));
+        bool stillMonitored = false;
+        for (const auto& site : monitoredSites) {
+            if (site == url) {
+                stillMonitored = true;
+                break;
+            }
+        }
+        if (!stillMonitored) staleUrls.push_back(url);
+    }
+    sqlite3_finalize(select);
+
+    sqlite3_stmt* remove = nullptr;
+    if (sqlite3_prepare_v2(m_db, "DELETE FROM site_status WHERE url = ?;", -1, &remove, nullptr) != SQLITE_OK) {
+        return false;
+    }
+
+    bool ok = true;
+    for (const auto& url : staleUrls) {
+        sqlite3_bind_text(remove, 1, url.c_str(), -1, SQLITE_TRANSIENT);
+        ok = (sqlite3_step(remove) == SQLITE_DONE) && ok;
+        sqlite3_reset(remove);
+    }
+    sqlite3_finalize(remove);
+    return ok;
+}
