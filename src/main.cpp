@@ -6,7 +6,7 @@
 #include "collector/WebCollector.hpp"
 #include "collector/CertCollector.hpp"
 #include "collector/BackupCollector.hpp"
-#include "notifier/DiscordBotNotifier.hpp"
+#include "notifier/NtfyNotifier.hpp"
 #include "notifier/HeartbeatNotifier.hpp"
 #include <iostream>
 #include <iomanip>
@@ -15,6 +15,15 @@
 #include <sstream>
 #include <map>
 #include <optional>
+
+// "https://cloud.noa-r.fr/status.php" -> "cloud.noa-r.fr"
+std::string displayHost(const std::string& url) {
+    std::string host = url;
+    auto scheme = host.find("://");
+    if (scheme != std::string::npos) host = host.substr(scheme + 3);
+    auto path = host.find('/');
+    return path == std::string::npos ? host : host.substr(0, path);
+}
 
 std::string formatDouble(double value, int precision) {
     std::ostringstream out;
@@ -51,7 +60,7 @@ int main() {
     WebCollector web;
     CertCollector certs;
     BackupCollector backup;
-    DiscordBotNotifier notifier(config.getToken(), config.getUserId());
+    NtfyNotifier notifier(config.getNtfyUrl(), config.getNtfyTopic(), config.getNtfyToken());
     HeartbeatNotifier heartbeat(config.getHeartbeatUrl());
 
     bool tempAlertSent = false;
@@ -81,7 +90,7 @@ int main() {
         db.insertMetrics(temp, ram, diskUsage);
 
         if (temp > config.getTempThreshold() && !tempAlertSent) {
-            if (notifier.sendMessage("Alert: CPU temp at " + formatDouble(temp, 1) + "°C")) {
+            if (notifier.sendMessage("Température élevée", "CPU à " + formatDouble(temp, 1) + " °C.")) {
                 tempAlertSent = true;
             }
         } else if (temp < config.getTempThreshold() - 5.0) {
@@ -91,7 +100,7 @@ int main() {
         if (ram > config.getRamThreshold()) {
             ramOverThresholdDuration += config.getInterval();
             if (ramOverThresholdDuration >= config.getRamAlertDelay() && !ramAlertSent) {
-                if (notifier.sendMessage("Alert: RAM usage above " + formatDouble(ram, 1) + "% for " + std::to_string(ramOverThresholdDuration) + "s")) {
+                if (notifier.sendMessage("Mémoire saturée", "RAM à " + formatDouble(ram, 1) + " % depuis " + std::to_string(ramOverThresholdDuration) + " s.")) {
                     ramAlertSent = true;
                 }
             }
@@ -103,8 +112,7 @@ int main() {
         }
 
         if (diskUsage > config.getDiskThreshold() && !diskAlertSent) {
-            std::string msg = "Alert: Disk usage is high: " + formatDouble(diskUsage, 1) + "%";
-            if (notifier.sendMessage(msg)) {
+            if (notifier.sendMessage("Disque presque plein", "Disque utilisé à " + formatDouble(diskUsage, 1) + " %.")) {
                 diskAlertSent = true;
             }
         } else if (diskUsage < config.getDiskThreshold() - 5.0) {
@@ -120,12 +128,12 @@ int main() {
                 siteFailCounts[url]++;
                 
                 if (siteFailCounts[url] == MAX_FAILURES) {
-                    notifier.sendMessage("Website Down: " + url + " (Confirmed)");
+                    notifier.sendMessage("Site indisponible", displayHost(url) + " ne répond plus.");
                 }
             } 
             else {
                 if (siteFailCounts[url] >= MAX_FAILURES) {
-                    notifier.sendMessage("Website Back Online: " + url);
+                    notifier.sendMessage("Site rétabli", displayHost(url) + " répond à nouveau.", "default");
                 }
                 
                 siteFailCounts[url] = 0;
@@ -141,7 +149,7 @@ int main() {
                 int days = *expiry;
 
                 if (days <= config.getCertWarningDays() && !certAlertSent[url]) {
-                    if (notifier.sendMessage("Alert: TLS certificate for " + url + (days < 0 ? " has EXPIRED" : " expires in " + std::to_string(days) + " days"))) {
+                    if (notifier.sendMessage("Certificat HTTPS", displayHost(url) + (days < 0 ? " : certificat expiré." : " : expire dans " + std::to_string(days) + " jours."))) {
                         certAlertSent[url] = true;
                     }
                 } else if (days > config.getCertWarningDays()) {
@@ -155,13 +163,13 @@ int main() {
 
                 if (backupStale && !backupAlertSent) {
                     std::string msg = hours < 0
-                        ? "Alert: no successful backup found (" + config.getBackupStatusFile() + ")"
-                        : "Alert: last successful backup was " + formatDouble(hours, 1) + "h ago";
-                    if (notifier.sendMessage(msg)) {
+                        ? "Aucune sauvegarde réussie trouvée."
+                        : "Dernière sauvegarde réussie il y a " + formatDouble(hours, 0) + " h.";
+                    if (notifier.sendMessage("Sauvegarde en retard", msg)) {
                         backupAlertSent = true;
                     }
                 } else if (!backupStale && backupAlertSent) {
-                    notifier.sendMessage("Backup OK again: last success " + formatDouble(hours, 1) + "h ago");
+                    notifier.sendMessage("Sauvegarde rétablie", "Dernière sauvegarde réussie il y a " + formatDouble(hours, 0) + " h.", "default");
                     backupAlertSent = false;
                 }
             }

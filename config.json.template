@@ -1,6 +1,7 @@
 {
-    "discord_token": "YOUR_BOT_TOKEN_HERE",
-    "discord_user_id": "YOUR_USER_ID_HERE",
+    "ntfy_url": "https://ntfy.example.com",
+    "ntfy_topic": "alerts",
+    "ntfy_token": "tk_YOUR_PUBLISH_TOKEN",
     "temp_threshold": 60.0,
     "disk_threshold": 90.0,
     "ram_threshold": 95.0,

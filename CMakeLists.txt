@@ -26,7 +26,7 @@ add_executable(monitor_agent
     src/collector/WebCollector.cpp
     src/collector/CertCollector.cpp
     src/collector/BackupCollector.cpp
-    src/notifier/DiscordBotNotifier.cpp
+    src/notifier/NtfyNotifier.cpp
     src/notifier/HeartbeatNotifier.cpp
 )
 

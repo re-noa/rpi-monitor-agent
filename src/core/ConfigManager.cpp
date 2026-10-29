@@ -14,12 +14,16 @@ bool ConfigManager::load() {
     }
 }
 
-std::string ConfigManager::getToken() const {
-    return m_data.value("discord_token", "");
+std::string ConfigManager::getNtfyUrl() const {
+    return m_data.value("ntfy_url", "");
 }
 
-std::string ConfigManager::getUserId() const {
-    return m_data.value("discord_user_id", "");
+std::string ConfigManager::getNtfyTopic() const {
+    return m_data.value("ntfy_topic", "");
+}
+
+std::string ConfigManager::getNtfyToken() const {
+    return m_data.value("ntfy_token", "");
 }
 
 double ConfigManager::getTempThreshold() const {

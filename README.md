@@ -1,6 +1,6 @@
 # RPi-System-Guardian
 
-**RPi-System-Guardian** est un agent de monitoring léger et modulaire écrit en **C++17** pour Raspberry Pi. Il surveille en temps réel les ressources critiques (CPU, RAM) et alerte l'administrateur via un **Bot Discord** privé en cas de dépassement de seuils configurables.
+**RPi-System-Guardian** est un agent de monitoring léger et modulaire écrit en **C++17** pour Raspberry Pi. Il surveille en temps réel les ressources critiques (CPU, RAM) et alerte l'administrateur par **notifications push ntfy** en cas de dépassement de seuils configurables.
 
 ---
 
@@ -10,7 +10,7 @@
 * **Alertes Intelligentes :** 
     * Système d'**hystérésis** pour éviter le spam de notifications.
     * Persistance d'état (délai d'alerte) pour filtrer les pics de charge éphémères.
-* **Communication Sécurisée :** Intégration de l'API REST Discord (v10) via `libcurl`.
+* **Notifications push :** alertes envoyées via [ntfy](https://ntfy.sh) (auto-hébergeable) avec `libcurl`, avec priorités et tags.
 * **Architecture Industrielle :** Gestion des secrets par template, configuration JSON et déploiement en tant que service `systemd`.
 * **Monitoring d'Infrastructures Web :** Vérification périodique de la disponibilité de sites web via requêtes HTTP (`libcurl`).
 * **Surveillance Espace Disque :** Analyse via `statvfs` pour prévenir la saturation du système de fichiers.
@@ -33,7 +33,7 @@ L'architecture suit une logique de micro-services découplés autour d'une base 
 * **Producer (C++) :** Daemon de bas niveau récoltant les métriques (Sysfs, Procfs, HTTP) et les persistant via SQLite.
 * **Consumer API (Python) :** Serveur FastAPI asynchrone exposant les données au format JSON.
 * **Dashboard (UI) :** Single Page Application interrogeant l'API pour un affichage dynamique (Graphiques lissés, LEDs d'état).
-* **Notifier :** Module C++ gérant les alertes critiques via Webhooks Discord.
+* **Notifier :** Module C++ envoyant les alertes à un serveur ntfy (publication JSON, jeton d'accès).
 
 ---
 
@@ -59,7 +59,7 @@ chmod +x build.sh
 ```bash
 cp config.json.template config.json
 ```
-2. Renseigner vos identifiants (Discord Token, User ID) dans `config.json`.
+2. Renseigner le serveur ntfy (`ntfy_url`, `ntfy_topic`, `ntfy_token`) dans `config.json`.
 
 ---
 

@@ -9,8 +9,9 @@ public:
     ConfigManager(const std::string& filename);
     bool load();
 
-    std::string getToken() const;
-    std::string getUserId() const;
+    std::string getNtfyUrl() const;
+    std::string getNtfyTopic() const;
+    std::string getNtfyToken() const;
     double getTempThreshold() const;
     double getRamThreshold() const;
     int getRamAlertDelay() const;
